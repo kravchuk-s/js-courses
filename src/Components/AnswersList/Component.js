@@ -106,9 +106,39 @@ const divideByAnswerId = (votes, answerId) => divideVotes(votesByAnswerId(votes,
 const getAuthor = (users, authorId) => users.find(user => user._id === authorId)
   || { profile: { fullName: 'Anonymous' } };
 
-const AnswersList = ({ answers, votes, users, onVote, user }) => (
+const bestWorstSort = (answers, votes, bestWorst) => {
+    return answers.sort((a,b) => {
+        const postvA = divideByAnswerId(votes, a._id).positive;
+        const postvB = divideByAnswerId(votes, b._id).positive;
+        const ngtvA = divideByAnswerId(votes, a._id).negative;
+        const ngtvB = divideByAnswerId(votes, b._id).negative;
+
+        if (bestWorst === 'best') {
+            return postvA < postvB;
+        }
+        if (bestWorst === 'worst') {
+            return ngtvA < ngtvB;
+        }
+    });
+
+};
+
+const sortAnswersBy = (answers, votes, sortBy) => {
+    switch (sortBy) {
+        case 'createdAt':
+            return answers.sort((a, b) => a.createdAt < b.createdAt);
+        case 'best':
+            return bestWorstSort(answers, votes, 'best');
+        case 'worst':
+            return bestWorstSort(answers, votes, 'worst');
+        default:
+            return answers;
+    }
+};
+
+const AnswersList = ({ answers, votes, users, onVote, user, sortBy }) => (
   <Answers>
-    {answers.map(answer => {
+    {sortAnswersBy(answers, votes, sortBy).map(answer => {
       const { positive, negative } = divideByAnswerId(votes, answer._id);
       const author = getAuthor(users, answer.createdById);
       return (
